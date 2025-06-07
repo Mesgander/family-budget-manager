@@ -1,0 +1,2472 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Budget Manager</title>
+
+```
+<!-- PWA Configuration -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Budget">
+<meta name="theme-color" content="#000000">
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Inter', sans-serif;
+        background: #ffffff;
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+        padding: 20px;
+        color: #000000;
+        line-height: 1.6;
+    }
+    
+    /* iOS Safe Area Support */
+    body {
+        padding-top: max(20px, env(safe-area-inset-top));
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+    }
+    
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 40px 0;
+        border-bottom: 1px solid #000;
+    }
+    
+    .header h1 {
+        font-size: 2.5rem;
+        font-weight: 300;
+        letter-spacing: -0.02em;
+        margin-bottom: 8px;
+    }
+    
+    .header p {
+        color: #666;
+        font-size: 1rem;
+        font-weight: 400;
+    }
+    
+    .card {
+        background: #ffffff;
+        border: 1px solid #000;
+        padding: 32px;
+        margin-bottom: 24px;
+    }
+    
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 500;
+        margin-bottom: 24px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    /* Grid Layout */
+    .grid {
+        display: grid;
+        gap: 24px;
+    }
+    
+    @media (min-width: 768px) {
+        .grid {
+            grid-template-columns: 1fr 380px;
+        }
+    }
+    
+    .overview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .metric-card {
+        padding: 24px;
+        border: 1px solid #000;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    
+    .metric-card:hover {
+        background: #f8f8f8;
+    }
+    
+    .metric-title {
+        font-size: 0.75rem;
+        color: #666;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 300;
+        color: #000;
+    }
+    
+    .metric-input {
+        font-size: 2rem;
+        font-weight: 300;
+        color: #000;
+        background: transparent;
+        border: none;
+        text-align: center;
+        width: 100%;
+        padding: 4px;
+    }
+    
+    .metric-input:focus {
+        outline: 2px solid #000;
+        outline-offset: 2px;
+    }
+    
+    /* Form Elements */
+    input, select, button {
+        font-family: inherit;
+        font-size: 0.875rem;
+        padding: 12px 16px;
+        border: 1px solid #000;
+        background: #fff;
+        transition: all 0.2s ease;
+        min-height: 48px;
+    }
+    
+    input:focus, select:focus {
+        outline: 2px solid #000;
+        outline-offset: 2px;
+    }
+    
+    button {
+        background: #000;
+        color: #fff;
+        cursor: pointer;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    button:hover {
+        background: #333;
+    }
+    
+    button:active {
+        transform: scale(0.98);
+    }
+    
+    button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+    
+    button.secondary {
+        background: #fff;
+        color: #000;
+        border: 1px solid #000;
+    }
+    
+    button.secondary:hover {
+        background: #f8f8f8;
+    }
+    
+    /* Week Selector */
+    .week-selector {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .week-selector select {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    /* Bucket Accounts */
+    .bucket {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        margin-bottom: 12px;
+        border: 1px solid #000;
+        background: #fff;
+    }
+    
+    .bucket:hover {
+        background: #f8f8f8;
+    }
+    
+    .bucket-label {
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+    
+    .bucket-meta {
+        font-size: 0.75rem;
+        color: #666;
+    }
+    
+    .bucket-value {
+        font-size: 1.25rem;
+        font-weight: 300;
+    }
+    
+    /* Cash Flow Forecast - Responsive Design */
+    .forecast-grid {
+        font-size: 0.875rem;
+        border: 1px solid #000;
+        background: #fff;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .forecast-table {
+        width: 100%;
+        min-width: 600px;
+    }
+    
+    .forecast-header {
+        display: grid;
+        grid-template-columns: 90px 70px 70px 70px 80px 60px;
+        gap: 4px;
+        padding: 12px 8px;
+        background: #000;
+        color: #fff;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.7rem;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .forecast-row {
+        display: grid;
+        grid-template-columns: 90px 70px 70px 70px 80px 60px;
+        gap: 4px;
+        padding: 10px 8px;
+        border-bottom: 1px solid #e0e0e0;
+        font-size: 0.8rem;
+    }
+    
+    .forecast-row > span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .forecast-row:last-child {
+        border-bottom: none;
+    }
+    
+    .forecast-row.current {
+        background: #f8f8f8;
+        font-weight: 500;
+    }
+    
+    .forecast-row.warning {
+        background: #fff3cd;
+    }
+    
+    .forecast-mobile {
+        display: none;
+    }
+    
+    @media (max-width: 640px) {
+        .forecast-grid {
+            border: none;
+        }
+        
+        .forecast-table {
+            display: none;
+        }
+        
+        .forecast-mobile {
+            display: block;
+        }
+        
+        .forecast-card {
+            margin-bottom: 12px;
+            border: 1px solid #000;
+            padding: 16px;
+            background: #fff;
+        }
+        
+        .forecast-card.current {
+            background: #f8f8f8;
+            border-width: 2px;
+        }
+        
+        .forecast-card.warning {
+            background: #fff3cd;
+        }
+        
+        .forecast-card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        
+        .forecast-card-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 0.875rem;
+        }
+        
+        .forecast-card-row label {
+            color: #666;
+            font-size: 0.75rem;
+        }
+    }
+    
+    /* Account Setup Wizard */
+    .setup-wizard {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .setup-step {
+        padding: 24px;
+        background: #f8f8f8;
+        border: 1px solid #000;
+        margin-bottom: 24px;
+    }
+    
+    .setup-step h3 {
+        font-size: 1.125rem;
+        margin-bottom: 16px;
+    }
+    
+    .account-type-selector {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    
+    .account-type-option {
+        padding: 20px;
+        border: 2px solid #ddd;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #fff;
+    }
+    
+    .account-type-option:hover {
+        border-color: #000;
+    }
+    
+    .account-type-option.selected {
+        border-color: #000;
+        background: #f0f0f0;
+    }
+    
+    .account-type-option h4 {
+        margin-bottom: 8px;
+    }
+    
+    .account-type-option p {
+        font-size: 0.875rem;
+        color: #666;
+        margin: 0;
+    }
+    
+    .account-balance-inputs {
+        display: grid;
+        gap: 16px;
+    }
+    
+    .balance-input-group {
+        display: grid;
+        gap: 8px;
+    }
+    
+    .balance-input-group label {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .balance-input-group input {
+        width: 100%;
+        font-size: 1.125rem;
+    }
+    
+    .balance-input-group small {
+        font-size: 0.75rem;
+        color: #666;
+    }
+    
+    .status-positive { color: #000; }
+    .status-negative { color: #666; font-weight: 500; }
+    
+    /* Expenses */
+    .expense-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 16px;
+        align-items: center;
+        padding: 16px;
+        margin-bottom: 8px;
+        border: 1px solid #000;
+        background: #fff;
+    }
+    
+    .expense-info {
+        min-width: 0;
+    }
+    
+    .expense-name {
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+    
+    .expense-meta {
+        font-size: 0.75rem;
+        color: #666;
+    }
+    
+    .expense-controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    
+    .expense-input {
+        width: 100px;
+        text-align: right;
+        padding: 8px 12px;
+        font-size: 0.875rem;
+    }
+    
+    .delete-btn {
+        background: #fff;
+        color: #000;
+        border: 1px solid #000;
+        padding: 8px 12px;
+        font-size: 0.875rem;
+        min-width: 40px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .delete-btn:hover {
+        background: #000;
+        color: #fff;
+    }
+    
+    .delete-btn:active {
+        transform: scale(0.95);
+    }
+    
+    /* Transfer Section */
+    .transfer-section {
+        text-align: center;
+        padding: 32px;
+        border: 1px solid #000;
+        margin-bottom: 24px;
+    }
+    
+    .transfer-details {
+        margin: 24px 0;
+        font-size: 0.875rem;
+    }
+    
+    .transfer-line {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .transfer-line:last-child {
+        border-bottom: none;
+        font-weight: 500;
+        padding-top: 16px;
+    }
+    
+    .transfer-button {
+        width: 100%;
+        padding: 16px;
+        margin-top: 24px;
+    }
+    
+    /* New Expense Form */
+    .new-expense-form {
+        padding: 24px;
+        border: 1px solid #000;
+        margin-bottom: 24px;
+        background: #f8f8f8;
+    }
+    
+    .form-grid {
+        display: grid;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    
+    @media (max-width: 640px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Cash Flow Actions */
+    .action-item {
+        padding: 16px;
+        margin: 8px 0;
+        border: 1px solid #000;
+        font-size: 0.875rem;
+    }
+    
+    .action-header {
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+    
+    .action-meta {
+        font-size: 0.75rem;
+        color: #666;
+    }
+    
+    /* Loading State */
+    .loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.95);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 2px solid #000;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Utility Classes */
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .mb-0 { margin-bottom: 0; }
+    .mt-4 { margin-top: 16px; }
+    .hidden { display: none; }
+    
+    /* Mobile Responsiveness */
+    @media (max-width: 640px) {
+        body {
+            padding: 16px;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+        }
+        
+        .card {
+            padding: 20px;
+        }
+        
+        .metric-value,
+        .metric-input {
+            font-size: 1.5rem;
+        }
+        
+        .forecast-header,
+        .forecast-row {
+            font-size: 0.7rem;
+            grid-template-columns: 70px repeat(5, 1fr);
+        }
+    }
+</style>
+```
+
+</head>
+<body>
+    <div class="loading">
+        <div class="spinner"></div>
+    </div>
+
+```
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>Budget Manager</h1>
+        <p>Weekly Cash Flow & Transfer Automation</p>
+    </div>
+
+    <!-- Week Selection & Account Setup -->
+    <div class="card">
+        <h2 class="section-title">Getting Started</h2>
+        
+        <!-- Account Setup Section (for first time users) -->
+        <div id="accountSetupSection" class="hidden">
+            <div class="setup-wizard">
+                <div class="setup-step">
+                    <h3>Step 1: Choose Your Account Structure</h3>
+                    <p style="font-size: 0.875rem; color: #666; margin-bottom: 20px;">
+                        Select how you want to organize your money. You can change this later.
+                    </p>
+                    
+                    <div class="account-type-selector">
+                        <div class="account-type-option" onclick="budgetManager.selectAccountType('simple')">
+                            <h4>Simple (2 Accounts)</h4>
+                            <p>Main account for all expenses + Savings account</p>
+                        </div>
+                        <div class="account-type-option selected" onclick="budgetManager.selectAccountType('standard')">
+                            <h4>Standard (3 Accounts)</h4>
+                            <p>Fixed expenses + General expenses + Savings</p>
+                        </div>
+                        <div class="account-type-option" onclick="budgetManager.selectAccountType('advanced')">
+                            <h4>Advanced (4+ Accounts)</h4>
+                            <p>Multiple buckets for different expense categories</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setup-step">
+                    <h3>Step 2: Enter Current Account Balances</h3>
+                    <p style="font-size: 0.875rem; color: #666; margin-bottom: 20px;">
+                        Enter your current balance for each account as of today.
+                    </p>
+                    
+                    <div id="accountBalanceInputs" class="account-balance-inputs">
+                        <!-- Dynamic inputs based on account type -->
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 16px; justify-content: center;">
+                    <button onclick="budgetManager.completeAccountSetup()" style="min-width: 160px;">Complete Setup</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Week Setup Section -->
+        <div id="weekSetupSection" class="hidden">
+            <div style="margin-bottom: 24px; padding: 20px; background: #f8f8f8; border: 1px solid #000;">
+                <h3 style="font-size: 1rem; margin-bottom: 16px;">Set Your Starting Date</h3>
+                <p style="font-size: 0.875rem; color: #666; margin-bottom: 16px;">
+                    Choose today's date to input your current account balances. Your budget tracking will begin from this exact date, and weeks will be calculated forward from here.
+                </p>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: end;">
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; color: #666;">
+                            Starting Date (Today)
+                        </label>
+                        <input type="date" id="weekStartingDate" style="width: 100%;">
+                        <small style="display: block; margin-top: 4px; color: #666; font-size: 0.7rem;">
+                            Enter your current account balances as of this date
+                        </small>
+                    </div>
+                    <button onclick="budgetManager.confirmWeekStart()" style="min-width: 120px;">Set Start Date</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="weekSelectorSection" class="week-selector">
+            <select id="weekSelect"></select>
+            <button onclick="budgetManager.addNewWeek()">Add Week</button>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Main Content -->
+        <div>
+            <!-- Income Section -->
+            <div class="card">
+                <h2 class="section-title">Income Sources</h2>
+                
+                <div style="margin-bottom: 24px;">
+                    <div id="incomeSourcesList" style="margin-bottom: 16px;"></div>
+                    <button onclick="budgetManager.toggleIncomeForm()" class="secondary" style="width: 100%;">+ Add Income Source</button>
+                    
+                    <div style="margin-top: 12px; padding: 12px; background: #f8f8f8; border: 1px solid #000;">
+                        <small style="display: block; color: #666; font-size: 0.75rem;">
+                            <strong>Note:</strong> All income is credited to the General Expenses account. Use the Transfer section to allocate funds to Fixed and Savings accounts based on your needs.
+                        </small>
+                    </div>
+                    
+                    <div id="incomeForm" class="hidden" style="margin-top: 16px; padding: 20px; border: 1px solid #000; background: #f8f8f8;">
+                        <div class="form-grid">
+                            <input type="text" id="incomeName" placeholder="Income source name (e.g., Salary, Gift, Bonus)">
+                            <div class="form-row">
+                                <input type="number" id="incomeAmount" placeholder="Amount" step="0.01">
+                                <select id="incomeFrequency" onchange="budgetManager.updateIncomeDayDate()">
+                                    <option value="one-off">One-off</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="fortnightly">Fortnightly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                            <div id="incomeDayDate"></div>
+                            <div class="form-row">
+                                <button onclick="budgetManager.addIncomeSource()" style="flex: 1;">Add Income</button>
+                                <button onclick="budgetManager.toggleIncomeForm()" class="secondary" style="flex: 1;">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                        <div class="form-grid">
+                            <input type="text" id="incomeName" placeholder="Income source name (e.g., Salary, Gift, Bonus)">
+                            <div class="form-row">
+                                <input type="number" id="incomeAmount" placeholder="Amount" step="0.01">
+                                <select id="incomeFrequency" onchange="budgetManager.updateIncomeDayDate()">
+                                    <option value="one-off">One-off</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="fortnightly">Fortnightly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                            <div id="incomeDayDate"></div>
+                            <div class="form-row">
+                                <button onclick="budgetManager.addIncomeSource()" style="flex: 1;">Add Income</button>
+                                <button onclick="budgetManager.toggleIncomeForm()" class="secondary" style="flex: 1;">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expenses Section -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <h2 class="section-title mb-0">Expenses</h2>
+                    <button class="secondary" onclick="budgetManager.toggleExpenses()">
+                        <span id="toggleText">Add New Expense</span>
+                    </button>
+                </div>
+                
+                <div class="overview-grid">
+                    <div class="metric-card">
+                        <div class="metric-title">Fixed Expenses</div>
+                        <div class="metric-value" id="fixedExpenses">$0.00</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Variable Expenses</div>
+                        <div class="metric-value" id="generalExpenses">$0.00</div>
+                    </div>
+                </div>
+
+                <div id="expensesList" class="hidden">
+                    <!-- Add New Expense -->
+                    <div class="new-expense-form">
+                        <h3 style="font-size: 1rem; margin-bottom: 16px;">Add New Expense</h3>
+                        <div class="form-grid">
+                            <select id="expenseCategory" onchange="budgetManager.handleCategoryChange()">
+                                <option value="">Select category or enter custom...</option>
+                                <option value="Rent">Rent</option>
+                                <option value="Childcare">Childcare</option>
+                                <option value="Phone">Phone</option>
+                                <option value="Internet">Internet</option>
+                                <option value="Car Insurance">Car Insurance</option>
+                                <option value="Home Insurance">Home Insurance</option>
+                                <option value="Health Insurance">Health Insurance</option>
+                                <option value="Council Rates">Council Rates</option>
+                                <option value="Water Rates">Water Rates</option>
+                                <option value="Loan Repayment">Loan Repayment</option>
+                                <option value="Power">Power/Electricity</option>
+                                <option value="Gas">Gas</option>
+                                <option value="Food">Food/Groceries</option>
+                                <option value="Petrol">Petrol</option>
+                                <option value="Spending">General Spending</option>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Medical">Medical/Health</option>
+                                <option value="Education">Education</option>
+                                <option value="Savings">Savings</option>
+                                <option value="Other">Other</option>
+                                <option value="custom">Custom...</option>
+                            </select>
+                            <input type="text" id="newExpenseName" placeholder="Expense name" style="display: none;">
+                            <div class="form-row">
+                                <input type="number" id="newExpenseAmount" placeholder="Amount" step="0.01">
+                                <select id="newExpenseFrequency" onchange="budgetManager.updateNewExpenseDayDate()">
+                                    <option value="weekly">Weekly</option>
+                                    <option value="fortnightly">Fortnightly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                            <div id="newExpenseDayDate"></div>
+                            <button onclick="budgetManager.addNewExpense()" style="width: 100%;">Add Expense</button>
+                        </div>
+                    </div>
+                    
+                    <div id="expensesContainer"></div>
+                </div>
+            </div>
+
+            <!-- Weekly Summary -->
+            <div class="card">
+                <h2 class="section-title">Weekly Summary</h2>
+                
+                <div class="overview-grid">
+                    <div class="metric-card">
+                        <div class="metric-title">Net Income This Week</div>
+                        <div class="metric-value" id="weeklyIncome">$0.00</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Total Expenses</div>
+                        <div class="metric-value" id="totalExpenses">$0.00</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Net Cash Flow</div>
+                        <div class="metric-value" id="netCashFlow">$0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cash Flow Forecast -->
+            <div class="card">
+                <h2 class="section-title">Cash Flow Forecast</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Total Account Balance</label>
+                        <div style="padding: 12px; border: 1px solid #000; background: #f8f8f8;">
+                            <div style="font-size: 1.5rem; font-weight: 300;" id="totalAccountBalance">$0.00</div>
+                            <div style="font-size: 0.7rem; color: #666; margin-top: 4px;">
+                                Fixed: $<span id="fixedBalance">0.00</span> + 
+                                General: $<span id="generalBalance">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Minimum Buffer</label>
+                        <input type="number" id="bufferInput" value="1000" step="0.01" onchange="budgetManager.updateCashFlowStatus()">
+                    </div>
+                </div>
+                
+                <div class="forecast-grid">
+                    <div class="forecast-table">
+                        <div class="forecast-header">
+                            <span>Week</span>
+                            <span>Income</span>
+                            <span>Expenses</span>
+                            <span>Net</span>
+                            <span>Balance</span>
+                            <span>Status</span>
+                        </div>
+                        <div id="cashFlowForecast"></div>
+                    </div>
+                    <div id="cashFlowForecastMobile" class="forecast-mobile"></div>
+                </div>
+                
+                <button onclick="budgetManager.optimizeCashFlow()" style="width: 100%; margin-top: 24px;">Optimize Cash Flow</button>
+                <div id="cashFlowActions" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+            <!-- Bucket Accounts -->
+            <div class="card">
+                <h2 class="section-title">Bucket Accounts</h2>
+                <div id="standardBuckets">
+                    <div class="bucket">
+                        <div>
+                            <div class="bucket-label">Fixed Expenses</div>
+                            <div class="bucket-meta">Balance: <span id="fixedBucket">$0.00</span></div>
+                        </div>
+                        <input type="number" id="fixedStart" value="0" style="width: 80px; text-align: right;" onchange="budgetManager.updateBucketStart('fixed', this.value)">
+                    </div>
+                    <div class="bucket">
+                        <div>
+                            <div class="bucket-label">General Expenses</div>
+                            <div class="bucket-meta">Balance: <span id="generalBucket">$0.00</span></div>
+                        </div>
+                        <input type="number" id="generalStart" value="0" style="width: 80px; text-align: right;" onchange="budgetManager.updateBucketStart('general', this.value)">
+                    </div>
+                </div>
+                <div id="simpleBuckets" class="hidden">
+                    <div class="bucket">
+                        <div>
+                            <div class="bucket-label">Main Account</div>
+                            <div class="bucket-meta">Balance: <span id="mainBucket">$0.00</span></div>
+                        </div>
+                        <input type="number" id="mainStart" value="0" style="width: 80px; text-align: right;" onchange="budgetManager.updateBucketStart('main', this.value)">
+                    </div>
+                </div>
+                <div class="bucket">
+                    <div>
+                        <div class="bucket-label">Savings</div>
+                        <div class="bucket-meta">Balance: <span id="savingsBucket">$0.00</span></div>
+                    </div>
+                    <input type="number" id="savingsStart" value="0" style="width: 80px; text-align: right;" onchange="budgetManager.updateBucketStart('savings', this.value)">
+                </div>
+                
+                <div style="margin-top: 20px; padding: 16px; background: #f8f8f8; border: 1px solid #000;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em;">Available Balance</div>
+                        <div style="font-size: 1.5rem; font-weight: 300; margin: 8px 0;">
+                            $<span id="availableBalance">0.00</span>
+                        </div>
+                        <div style="font-size: 0.7rem; color: #666;">
+                            <span id="availableBalanceDesc">Fixed + General accounts combined</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cash Flow Status -->
+            <div class="card">
+                <h2 class="section-title">Cash Flow Status</h2>
+                <div style="text-align: center; padding: 24px 0;">
+                    <div style="font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em;">Current Buffer</div>
+                    <div style="font-size: 2rem; font-weight: 300; margin: 8px 0;" id="bufferDisplay">$0.00</div>
+                    <div id="cashFlowStatus" style="font-size: 0.875rem; margin-top: 8px;"></div>
+                </div>
+            </div>
+
+            <!-- Transfer Section -->
+            <div class="card">
+                <h2 class="section-title">Smart Transfer Allocation</h2>
+                <div class="transfer-section">
+                    <p style="font-size: 0.875rem; color: #666; margin-bottom: 20px;">
+                        Intelligently allocate incoming funds based on this week's expenses and cash flow needs
+                    </p>
+                    <div id="transferDetails" class="transfer-details">
+                        <p style="color: #666;">Select a week to see transfer recommendations</p>
+                    </div>
+                    <button class="transfer-button" id="transferBtn" onclick="budgetManager.executeTransfer()" disabled>
+                        Execute Smart Transfer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+```
+
+(function() {
+‘use strict’;
+
+```
+// Data Management
+let budgetData = [];
+let selectedWeek = 0;
+let bucketAccounts = { fixed: 0, general: 0, savings: 0 };
+let transferHistory = [];
+let automationSettings = { fixed: 60, general: 25, savings: 15 };
+let mainAccountBalance = 5000;
+let cashFlowSettings = { minBuffer: 1000, autoManagement: true };
+let incomeStreams = [];
+let memoryStorage = {};
+let accountStructure = 'standard'; // simple, standard, advanced
+let isInitialSetup = true;
+
+const fixedExpenseCategories = ["Rent", "Childcare", "Phone", "Internet", "Car Insurance", "Home Insurance", "Health Insurance", "Council Rates", "Water Rates", "Loan Repayment", "Power", "Gas"];
+
+// Helper Functions
+function formatCurrency(amount, showDollarSign = true) {
+    const formatted = Math.abs(amount).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    const sign = amount < 0 ? '-' : '';
+    return showDollarSign ? `${sign}$${formatted}` : `${sign}${formatted}`;
+}
+
+function getMondayOfWeek(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+}
+
+function formatDate(date) {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
+function isFirstTimeUser() {
+    return budgetData.length === 0;
+}
+
+// Storage Functions
+function saveAppData() {
+    try {
+        const appData = {
+            budgetData,
+            bucketAccounts,
+            transferHistory,
+            automationSettings,
+            mainAccountBalance,
+            cashFlowSettings,
+            selectedWeek,
+            incomeStreams,
+            accountStructure,
+            isInitialSetup,
+            lastSaved: new Date().toISOString()
+        };
+        
+        // Try localStorage first, fall back to memory if not available
+        try {
+            localStorage.setItem('budgetManagerData', JSON.stringify(appData));
+        } catch (e) {
+            // Fallback for environments where localStorage isn't available
+            memoryStorage.budgetManagerData = JSON.stringify(appData);
+        }
+    } catch (error) {
+        console.error('Error saving data:', error);
+    }
+}
+
+function loadAppData() {
+    try {
+        let savedData = null;
+        
+        // Try localStorage first, fall back to memory
+        try {
+            savedData = localStorage.getItem('budgetManagerData');
+        } catch (e) {
+            savedData = memoryStorage.budgetManagerData;
+        }
+        
+        if (savedData) {
+            const data = JSON.parse(savedData);
+            budgetData = data.budgetData || [];
+            bucketAccounts = data.bucketAccounts || { fixed: 0, general: 0, savings: 0 };
+            transferHistory = data.transferHistory || [];
+            automationSettings = data.automationSettings || { fixed: 60, general: 25, savings: 15 };
+            mainAccountBalance = data.mainAccountBalance || 5000;
+            cashFlowSettings = data.cashFlowSettings || { minBuffer: 1000, autoManagement: true };
+            selectedWeek = data.selectedWeek || 0;
+            incomeStreams = data.incomeStreams || [];
+            accountStructure = data.accountStructure || 'standard';
+            isInitialSetup = data.isInitialSetup !== undefined ? data.isInitialSetup : true;
+        }
+    } catch (error) {
+        console.error('Error loading data:', error);
+    }
+}
+
+function initializeDefaultData() {
+    if (budgetData.length === 0) {
+        budgetData = [];
+    }
+    
+    if (bucketAccounts.fixed === 0 && bucketAccounts.general === 0 && bucketAccounts.savings === 0) {
+        bucketAccounts.fixed = 2500;
+        bucketAccounts.general = 1500;
+        bucketAccounts.savings = 5000;
+    }
+    
+    if (!incomeStreams) {
+        incomeStreams = [];
+    }
+}
+
+function initializeWeekSetup() {
+    const accountSetupSection = document.getElementById('accountSetupSection');
+    const weekSetupSection = document.getElementById('weekSetupSection');
+    const weekSelectorSection = document.getElementById('weekSelectorSection');
+    
+    if (isFirstTimeUser() && isInitialSetup) {
+        // Show account setup first
+        accountSetupSection.classList.remove('hidden');
+        weekSetupSection.classList.add('hidden');
+        weekSelectorSection.style.display = 'none';
+        
+        // Initialize account balance inputs
+        updateAccountBalanceInputs('standard');
+    } else if (isFirstTimeUser()) {
+        // Show week setup after account setup
+        accountSetupSection.classList.add('hidden');
+        weekSetupSection.classList.remove('hidden');
+        weekSelectorSection.style.display = 'none';
+        
+        const today = new Date();
+        const dateInput = document.getElementById('weekStartingDate');
+        if (dateInput) {
+            dateInput.value = today.toISOString().split('T')[0];
+        }
+    } else {
+        accountSetupSection.classList.add('hidden');
+        weekSetupSection.classList.add('hidden');
+        weekSelectorSection.style.display = 'flex';
+    }
+}
+
+function updateAccountBalanceInputs(type) {
+    const container = document.getElementById('accountBalanceInputs');
+    if (!container) return;
+    
+    let html = '';
+    
+    if (type === 'simple') {
+        html = `
+            <div class="balance-input-group">
+                <label>Main Account Balance</label>
+                <input type="number" id="mainAccountInput" placeholder="0.00" step="0.01" value="${bucketAccounts.general}">
+                <small>All your day-to-day money</small>
+            </div>
+            <div class="balance-input-group">
+                <label>Savings Account Balance</label>
+                <input type="number" id="savingsAccountInput" placeholder="0.00" step="0.01" value="${bucketAccounts.savings}">
+                <small>Your emergency fund and savings</small>
+            </div>
+        `;
+    } else if (type === 'standard') {
+        html = `
+            <div class="balance-input-group">
+                <label>Fixed Expenses Account</label>
+                <input type="number" id="fixedAccountInput" placeholder="0.00" step="0.01" value="${bucketAccounts.fixed}">
+                <small>For rent, bills, and recurring payments</small>
+            </div>
+            <div class="balance-input-group">
+                <label>General Expenses Account</label>
+                <input type="number" id="generalAccountInput" placeholder="0.00" step="0.01" value="${bucketAccounts.general}">
+                <small>For groceries, fuel, and variable spending</small>
+            </div>
+            <div class="balance-input-group">
+                <label>Savings Account Balance</label>
+                <input type="number" id="savingsAccountInput" placeholder="0.00" step="0.01" value="${bucketAccounts.savings}">
+                <small>Your emergency fund and savings</small>
+            </div>
+        `;
+    } else if (type === 'advanced') {
+        html = `
+            <p style="color: #666; font-size: 0.875rem; padding: 16px; background: #f0f0f0; border: 1px solid #ddd;">
+                Advanced account setup coming soon. For now, please use the Standard option.
+            </p>
+        `;
+    }
+    
+    container.innerHTML = html;
+}
+
+// Calculation Functions
+function calculateRecurringAmount(item, weekStarting, type = 'expense') {
+    if (!item || typeof item.amount !== 'number') return 0;
+    
+    if (item.frequency === 'one-off' && item.isOneOff) {
+        // For one-off payments, check if the payment date falls within this week
+        const [day, month, year] = weekStarting.split('/');
+        const weekStart = new Date(year, month - 1, day);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        
+        if (item.oneOffWeek) {
+            const [oDay, oMonth, oYear] = item.oneOffWeek.split('/');
+            const oneOffDate = new Date(oYear, oMonth - 1, oDay);
+            
+            // Check if one-off date falls within this week
+            if (oneOffDate >= weekStart && oneOffDate <= weekEnd) {
+                return item.amount;
+            }
+        }
+        return 0;
+    }
+    
+    const [day, month, year] = weekStarting.split('/');
+    const weekDate = new Date(year, month - 1, day);
+    const weekEndDate = new Date(weekDate);
+    weekEndDate.setDate(weekEndDate.getDate() + 6);
+    
+    switch (item.frequency) {
+        case 'weekly':
+            if (item.dayOfWeek) {
+                const dayMap = {
+                    'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3,
+                    'thursday': 4, 'friday': 5, 'saturday': 6
+                };
+                const targetDay = dayMap[item.dayOfWeek];
+                
+                for (let i = 0; i < 7; i++) {
+                    const checkDate = new Date(weekDate);
+                    checkDate.setDate(checkDate.getDate() + i);
+                    if (checkDate.getDay() === targetDay) {
+                        // Check if payment has started based on nextPaymentDate
+                        if (item.nextPaymentDate) {
+                            const [npDay, npMonth, npYear] = item.nextPaymentDate.split('/');
+                            const nextPayDate = new Date(npYear, npMonth - 1, npDay);
+                            
+                            // Only count if we've reached or passed the next payment date
+                            return checkDate >= nextPayDate ? item.amount : 0;
+                        }
+                        return item.amount;
+                    }
+                }
+                return 0;
+            }
+            return item.amount;
+            
+        case 'fortnightly':
+            if (item.dayOfWeek) {
+                const dayMap = {
+                    'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3,
+                    'thursday': 4, 'friday': 5, 'saturday': 6
+                };
+                const targetDay = dayMap[item.dayOfWeek];
+                
+                // Find the specific day in this week
+                for (let i = 0; i < 7; i++) {
+                    const checkDate = new Date(weekDate);
+                    checkDate.setDate(checkDate.getDate() + i);
+                    
+                    if (checkDate.getDay() === targetDay) {
+                        // For expenses with nextPaymentDate
+                        if (type === 'expense' && item.nextPaymentDate) {
+                            const [npDay, npMonth, npYear] = item.nextPaymentDate.split('/');
+                            const nextPayDate = new Date(npYear, npMonth - 1, npDay);
+                            
+                            // Calculate weeks difference from next payment date
+                            const daysDiff = Math.floor((checkDate - nextPayDate) / (24 * 60 * 60 * 1000));
+                            const weeksDiff = Math.floor(daysDiff / 7);
+                            
+                            // Payment occurs if it's on or after next payment date and on the right fortnight
+                            return daysDiff >= 0 && weeksDiff % 2 === 0 ? item.amount : 0;
+                        }
+                        // For income with startDate
+                        else if (type === 'income' && item.startDate) {
+                            const [startDay, startMonth, startYear] = item.startDate.split('/');
+                            const startDate = new Date(startYear, startMonth - 1, startDay);
+                            
+                            // Find the first occurrence of this day on or after start date
+                            const firstOccurrence = new Date(startDate);
+                            while (firstOccurrence.getDay() !== targetDay) {
+                                firstOccurrence.setDate(firstOccurrence.getDate() + 1);
+                            }
+                            
+                            // Calculate weeks between first occurrence and check date
+                            const daysDiff = Math.floor((checkDate - firstOccurrence) / (24 * 60 * 60 * 1000));
+                            const weeksDiff = Math.floor(daysDiff / 7);
+                            
+                            return weeksDiff >= 0 && weeksDiff % 2 === 0 ? item.amount : 0;
+                        } else {
+                            // Fallback for items without dates
+                            const referenceDate = new Date('2025-01-06'); // A Monday
+                            const daysDiff = Math.floor((checkDate - referenceDate) / (24 * 60 * 60 * 1000));
+                            const weeksDiff = Math.floor(daysDiff / 7);
+                            return weeksDiff % 2 === 0 ? item.amount : 0;
+                        }
+                    }
+                }
+                return 0;
+            } else {
+                // Fallback for items without dayOfWeek specified
+                if (type === 'income' && item.startDate) {
+                    const [startDay, startMonth, startYear] = item.startDate.split('/');
+                    const startDate = new Date(startYear, startMonth - 1, startDay);
+                    const weeksDiff = Math.floor((weekDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+                    return weeksDiff >= 0 && weeksDiff % 2 === 0 ? item.amount : 0;
+                } else {
+                    const referenceDate = new Date('2025-01-06');
+                    const weeksDiff = Math.floor((weekDate - referenceDate) / (7 * 24 * 60 * 60 * 1000));
+                    return weeksDiff % 2 === 0 ? item.amount : 0;
+                }
+            }
+            
+        case 'monthly':
+            const dayOfMonth = item.dayOfMonth || 1;
+            
+            for (let i = 0; i < 7; i++) {
+                const checkDate = new Date(weekDate);
+                checkDate.setDate(checkDate.getDate() + i);
+                if (checkDate.getDate() === dayOfMonth) {
+                    // Check if payment has started based on nextPaymentDate
+                    if (item.nextPaymentDate) {
+                        const [npDay, npMonth, npYear] = item.nextPaymentDate.split('/');
+                        const nextPayDate = new Date(npYear, npMonth - 1, npDay);
+                        
+                        // Only count if we've reached or passed the next payment date
+                        return checkDate >= nextPayDate ? item.amount : 0;
+                    }
+                    return item.amount;
+                }
+            }
+            return 0;
+            
+        default:
+            return item.amount;
+    }
+}
+
+function calculateWeeklyIncome(weekStarting) {
+    let totalIncome = 0;
+    incomeStreams.forEach(income => {
+        totalIncome += calculateRecurringAmount(income, weekStarting, 'income');
+    });
+    return totalIncome;
+}
+
+// Update Functions
+function updateDisplay() {
+    updateWeekSelector();
+    updateBudget();
+    updateBucketDisplay();
+    updateCashFlowStatus();
+    updateInitialValues();
+}
+
+function updateInitialValues() {
+    mainAccountBalance = bucketAccounts.fixed + bucketAccounts.general;
+    
+    const totalBalanceElement = document.getElementById('totalAccountBalance');
+    if (totalBalanceElement) {
+        totalBalanceElement.textContent = formatCurrency(mainAccountBalance);
+    }
+    
+    const fixedBalanceElement = document.getElementById('fixedBalance');
+    if (fixedBalanceElement) {
+        fixedBalanceElement.textContent = formatCurrency(bucketAccounts.fixed, false);
+    }
+    
+    const generalBalanceElement = document.getElementById('generalBalance');
+    if (generalBalanceElement) {
+        generalBalanceElement.textContent = formatCurrency(bucketAccounts.general, false);
+    }
+    
+    const bufferInput = document.getElementById('bufferInput');
+    if (bufferInput) {
+        bufferInput.value = cashFlowSettings.minBuffer;
+    }
+    
+    const fixedStartInput = document.getElementById('fixedStart');
+    if (fixedStartInput) {
+        fixedStartInput.value = bucketAccounts.fixed;
+    }
+    
+    const generalStartInput = document.getElementById('generalStart');
+    if (generalStartInput) {
+        generalStartInput.value = bucketAccounts.general;
+    }
+    
+    const savingsStartInput = document.getElementById('savingsStart');
+    if (savingsStartInput) {
+        savingsStartInput.value = bucketAccounts.savings;
+    }
+}
+
+function updateWeekSelector() {
+    const select = document.getElementById('weekSelect');
+    if (!select || budgetData.length === 0) return;
+    
+    select.innerHTML = '';
+    budgetData.forEach((week, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        
+        // Calculate week end date
+        const [day, month, year] = week.weekStarting.split('/');
+        const startDate = new Date(year, month - 1, day);
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 6);
+        
+        const endDateStr = formatDate(endDate);
+        
+        if (index === 0) {
+            option.textContent = `${week.weekStarting} - ${endDateStr} (Starting week)`;
+        } else {
+            option.textContent = `${week.weekStarting} - ${endDateStr}`;
+        }
+        
+        select.appendChild(option);
+    });
+    
+    if (selectedWeek >= budgetData.length) {
+        selectedWeek = Math.max(0, budgetData.length - 1);
+    }
+    
+    select.value = selectedWeek;
+    select.onchange = () => {
+        selectedWeek = parseInt(select.value);
+        updateBudget();
+        saveAppData();
+    };
+}
+
+function updateBudget() {
+    const currentWeek = budgetData[selectedWeek];
+    if (!currentWeek) return;
+
+    let weeklyIncome = calculateWeeklyIncome(currentWeek.weekStarting);
+    currentWeek.income = weeklyIncome;
+
+    const weeklyIncomeElement = document.getElementById('weeklyIncome');
+    if (weeklyIncomeElement) {
+        weeklyIncomeElement.textContent = formatCurrency(weeklyIncome);
+    }
+
+    let totalExpenses = 0;
+    let fixedTotal = 0, generalTotal = 0;
+    
+    Object.entries(currentWeek.expenses || {}).forEach(([key, expense]) => {
+        const amount = calculateRecurringAmount(expense, currentWeek.weekStarting, 'expense');
+        totalExpenses += amount;
+        
+        if (fixedExpenseCategories.some(cat => key.toLowerCase().includes(cat.toLowerCase()))) {
+            fixedTotal += amount;
+        } else {
+            generalTotal += amount;
+        }
+    });
+
+    const netCashFlow = weeklyIncome - totalExpenses;
+
+    const totalExpensesElement = document.getElementById('totalExpenses');
+    if (totalExpensesElement) {
+        totalExpensesElement.textContent = formatCurrency(totalExpenses);
+    }
+    
+    const netCashFlowElement = document.getElementById('netCashFlow');
+    if (netCashFlowElement) {
+        netCashFlowElement.textContent = formatCurrency(netCashFlow);
+    }
+    
+    const fixedExpensesElement = document.getElementById('fixedExpenses');
+    if (fixedExpensesElement) {
+        fixedExpensesElement.textContent = formatCurrency(fixedTotal);
+    }
+    
+    const generalExpensesElement = document.getElementById('generalExpenses');
+    if (generalExpensesElement) {
+        generalExpensesElement.textContent = formatCurrency(generalTotal);
+    }
+
+    updateTransferSuggestions(netCashFlow);
+    updateExpensesList();
+    updateIncomeSourcesList();
+}
+
+function updateExpensesList() {
+    const container = document.getElementById('expensesContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const currentWeek = budgetData[selectedWeek];
+    if (!currentWeek) {
+        container.innerHTML = '<p style="text-align: center; color: #666; font-size: 0.875rem; padding: 20px;">Please add a week first</p>';
+        return;
+    }
+    
+    if (!currentWeek.expenses || Object.keys(currentWeek.expenses).length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #666; font-size: 0.875rem; padding: 20px;">No expenses added</p>';
+        return;
+    }
+    
+    Object.entries(currentWeek.expenses || {}).forEach(([expense, expenseData]) => {
+        const weeklyAmount = calculateRecurringAmount(expenseData, currentWeek.weekStarting, 'expense');
+        const div = document.createElement('div');
+        div.className = 'expense-item';
+        
+        let statusText = '';
+        if (weeklyAmount > 0) {
+            statusText = `This week: ${formatCurrency(weeklyAmount)}`;
+        } else {
+            statusText = 'Not this week';
+        }
+        
+        div.innerHTML = `
+            <div class="expense-info">
+                <div class="expense-name">${expense}</div>
+                <div class="expense-meta">
+                    ${expenseData.frequency} • ${statusText}
+                </div>
+            </div>
+            <div class="expense-controls">
+                <input type="number" class="expense-input" value="${expenseData.amount}" 
+                       onchange="budgetManager.updateExpenseAmount('${expense.replace(/'/g, "\\'")}', this.value)" step="0.01">
+                <button class="delete-btn" onclick="budgetManager.deleteExpense('${expense.replace(/'/g, "\\'")}')" title="Delete expense">×</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function updateIncomeSourcesList() {
+    const container = document.getElementById('incomeSourcesList');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (incomeStreams.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #666; font-size: 0.875rem;">No income sources added</p>';
+        return;
+    }
+    
+    const currentWeek = budgetData[selectedWeek];
+    if (!currentWeek) {
+        container.innerHTML = '<p style="text-align: center; color: #666; font-size: 0.875rem;">Please add a week first</p>';
+        return;
+    }
+    
+    incomeStreams.forEach((income, index) => {
+        const weeklyAmount = calculateRecurringAmount(income, currentWeek.weekStarting, 'income');
+        const div = document.createElement('div');
+        div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 8px; border: 1px solid #000; background: #fff;';
+        
+        let frequencyText = income.frequency;
+        if (income.frequency === 'one-off') {
+            frequencyText = `One-off (${income.oneOffWeek})`;
+        }
+        
+        let statusText = '';
+        if (weeklyAmount > 0) {
+            statusText = `This week: ${formatCurrency(weeklyAmount)}`;
+        } else if (income.frequency === 'one-off' && income.oneOffWeek !== currentWeek.weekStarting) {
+            statusText = 'Not this week';
+        } else {
+            statusText = 'Not this week';
+        }
+        
+        div.innerHTML = `
+            <div style="flex: 1;">
+                <div style="font-weight: 500;">${income.name}</div>
+                <div style="font-size: 0.75rem; color: #666;">
+                    ${frequencyText} • ${formatCurrency(income.amount)} • ${statusText}
+                </div>
+            </div>
+            <button class="delete-btn" onclick="budgetManager.deleteIncomeSource(${index})" title="Delete income source" style="margin-left: 12px;">×</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function updateBucketDisplay() {
+    // Show/hide buckets based on account structure
+    const standardBuckets = document.getElementById('standardBuckets');
+    const simpleBuckets = document.getElementById('simpleBuckets');
+    
+    if (accountStructure === 'simple') {
+        if (standardBuckets) standardBuckets.classList.add('hidden');
+        if (simpleBuckets) simpleBuckets.classList.remove('hidden');
+        
+        const mainBucketElement = document.getElementById('mainBucket');
+        if (mainBucketElement) {
+            mainBucketElement.textContent = formatCurrency(bucketAccounts.general);
+        }
+        
+        const mainStartInput = document.getElementById('mainStart');
+        if (mainStartInput) {
+            mainStartInput.value = bucketAccounts.general;
+        }
+        
+        const availableDesc = document.getElementById('availableBalanceDesc');
+        if (availableDesc) {
+            availableDesc.textContent = 'Main account balance';
+        }
+    } else {
+        if (standardBuckets) standardBuckets.classList.remove('hidden');
+        if (simpleBuckets) simpleBuckets.classList.add('hidden');
+        
+        const fixedBucketElement = document.getElementById('fixedBucket');
+        if (fixedBucketElement) {
+            fixedBucketElement.textContent = formatCurrency(bucketAccounts.fixed);
+        }
+        
+        const generalBucketElement = document.getElementById('generalBucket');
+        if (generalBucketElement) {
+            generalBucketElement.textContent = formatCurrency(bucketAccounts.general);
+        }
+        
+        const fixedStartInput = document.getElementById('fixedStart');
+        if (fixedStartInput) {
+            fixedStartInput.value = bucketAccounts.fixed;
+        }
+        
+        const generalStartInput = document.getElementById('generalStart');
+        if (generalStartInput) {
+            generalStartInput.value = bucketAccounts.general;
+        }
+        
+        const availableDesc = document.getElementById('availableBalanceDesc');
+        if (availableDesc) {
+            availableDesc.textContent = 'Fixed + General accounts combined';
+        }
+    }
+    
+    const savingsBucketElement = document.getElementById('savingsBucket');
+    if (savingsBucketElement) {
+        savingsBucketElement.textContent = formatCurrency(bucketAccounts.savings);
+    }
+    
+    const savingsStartInput = document.getElementById('savingsStart');
+    if (savingsStartInput) {
+        savingsStartInput.value = bucketAccounts.savings;
+    }
+    
+    const availableBalance = bucketAccounts.fixed + bucketAccounts.general;
+    const availableBalanceElement = document.getElementById('availableBalance');
+    if (availableBalanceElement) {
+        availableBalanceElement.textContent = formatCurrency(availableBalance, false);
+    }
+    
+    updateCashFlowStatus();
+}
+
+function updateCashFlowStatus() {
+    mainAccountBalance = bucketAccounts.fixed + bucketAccounts.general;
+    cashFlowSettings.minBuffer = parseFloat(document.getElementById('bufferInput')?.value || 0) || 0;
+    
+    const totalBalanceElement = document.getElementById('totalAccountBalance');
+    if (totalBalanceElement) {
+        totalBalanceElement.textContent = formatCurrency(mainAccountBalance);
+    }
+    
+    const fixedBalanceElement = document.getElementById('fixedBalance');
+    if (fixedBalanceElement) {
+        fixedBalanceElement.textContent = formatCurrency(bucketAccounts.fixed, false);
+    }
+    
+    const generalBalanceElement = document.getElementById('generalBalance');
+    if (generalBalanceElement) {
+        generalBalanceElement.textContent = formatCurrency(bucketAccounts.general, false);
+    }
+    
+    const buffer = mainAccountBalance - cashFlowSettings.minBuffer;
+    
+    const bufferDisplay = document.getElementById('bufferDisplay');
+    if (bufferDisplay) {
+        bufferDisplay.textContent = formatCurrency(buffer);
+    }
+    
+    const statusDisplay = document.getElementById('cashFlowStatus');
+    if (statusDisplay) {
+        if (buffer < 0) {
+            statusDisplay.textContent = 'Below minimum buffer';
+            statusDisplay.style.color = '#666';
+        } else if (buffer < 500) {
+            statusDisplay.textContent = 'Low buffer';
+            statusDisplay.style.color = '#666';
+        } else {
+            statusDisplay.textContent = 'Healthy buffer';
+            statusDisplay.style.color = '#000';
+        }
+    }
+    
+    saveAppData();
+}
+
+function updateTransferSuggestions(netCashFlow) {
+    const transferDetails = document.getElementById('transferDetails');
+    if (!transferDetails) return;
+    
+    const currentWeek = budgetData[selectedWeek];
+    if (!currentWeek) return;
+    
+    // Get income details for this week
+    let incomeDetails = [];
+    let totalWeeklyIncome = 0;
+    
+    incomeStreams.forEach(income => {
+        const amount = calculateRecurringAmount(income, currentWeek.weekStarting, 'income');
+        if (amount > 0) {
+            // Find which day this income arrives
+            const [day, month, year] = currentWeek.weekStarting.split('/');
+            const weekStart = new Date(year, month - 1, day);
+            
+            for (let i = 0; i < 7; i++) {
+                const checkDate = new Date(weekStart);
+                checkDate.setDate(checkDate.getDate() + i);
+                
+                // Check if this is the payment day
+                if (income.dayOfWeek) {
+                    const dayMap = {
+                        'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3,
+                        'thursday': 4, 'friday': 5, 'saturday': 6
+                    };
+                    if (checkDate.getDay() === dayMap[income.dayOfWeek]) {
+                        const dayName = checkDate.toLocaleDateString('en-US', { weekday: 'long' });
+                        incomeDetails.push({
+                            name: income.name,
+                            amount: amount,
+                            day: dayName,
+                            date: formatDate(checkDate)
+                        });
+                        totalWeeklyIncome += amount;
+                        break;
+                    }
+                } else if (income.dayOfMonth && checkDate.getDate() === income.dayOfMonth) {
+                    const dayName = checkDate.toLocaleDateString('en-US', { weekday: 'long' });
+                    incomeDetails.push({
+                        name: income.name,
+                        amount: amount,
+                        day: dayName,
+                        date: formatDate(checkDate)
+                    });
+                    totalWeeklyIncome += amount;
+                    break;
+                }
+            }
+        }
+    });
+    
+    // Calculate weekly expenses breakdown
+    let fixedExpenses = 0;
+    let generalExpenses = 0;
+    
+    Object.entries(currentWeek.expenses || {}).forEach(([key, expense]) => {
+        const amount = calculateRecurringAmount(expense, currentWeek.weekStarting, 'expense');
+        if (fixedExpenseCategories.some(cat => key.toLowerCase().includes(cat.toLowerCase()))) {
+            fixedExpenses += amount;
+        } else {
+            generalExpenses += amount;
+        }
+    });
+    
+    if (incomeDetails.length === 0) {
+        transferDetails.innerHTML = '<p style="color: #666;">No income expected this week</p>';
+        const transferBtn = document.getElementById('transferBtn');
+        if (transferBtn) transferBtn.disabled = true;
+        return;
+    }
+    
+    // Show income schedule and smart allocation
+    let html = `
+        <div style="margin-bottom: 20px; padding: 16px; background: #f8f8f8; border: 1px solid #000;">
+            <h4 style="font-size: 0.875rem; margin-bottom: 12px; text-transform: uppercase;">Income This Week</h4>
+    `;
+    
+    incomeDetails.forEach(income => {
+        html += `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 0.8rem;">${income.name} (${income.day})</span>
+                <span style="font-weight: 500;">${formatCurrency(income.amount)}</span>
+            </div>
+        `;
+    });
+    
+    html += `
+            <div style="border-top: 1px solid #000; margin-top: 12px; padding-top: 12px;">
+                <div style="display: flex; justify-content: space-between; font-weight: 500;">
+                    <span>Total Income</span>
+                    <span>${formatCurrency(totalWeeklyIncome)}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 20px; padding: 16px; background: #f0f0f0; border: 1px solid #000;">
+            <h4 style="font-size: 0.875rem; margin-bottom: 12px; text-transform: uppercase;">Smart Allocation</h4>
+            <p style="font-size: 0.75rem; color: #666; margin-bottom: 12px;">
+                Based on this week's expenses and cash flow needs
+            </p>
+    `;
+    
+    // Calculate smart allocation
+    const savingsAllocation = Math.max(0, totalWeeklyIncome - fixedExpenses - generalExpenses);
+    const fixedNeeded = Math.max(0, fixedExpenses - bucketAccounts.fixed);
+    const generalNeeded = Math.max(0, generalExpenses - bucketAccounts.general);
+    
+    // Priority: 1) Cover fixed shortfall, 2) Cover general shortfall, 3) Savings
+    let allocations = {
+        fixed: Math.min(fixedNeeded, totalWeeklyIncome),
+        general: 0,
+        savings: 0
+    };
+    
+    let remaining = totalWeeklyIncome - allocations.fixed;
+    allocations.general = Math.min(generalNeeded, remaining);
+    remaining -= allocations.general;
+    allocations.savings = remaining;
+    
+    html += `
+            <div class="transfer-line">
+                <span>To Fixed Account</span>
+                <span>$<span id="suggestedFixed">${formatCurrency(allocations.fixed, false)}</span></span>
+            </div>
+            <div class="transfer-line">
+                <span>Keep in General</span>
+                <span>$<span id="suggestedGeneral">${formatCurrency(allocations.general, false)}</span></span>
+            </div>
+            <div class="transfer-line">
+                <span>To Savings</span>
+                <span>$<span id="suggestedSavings">${formatCurrency(allocations.savings, false)}</span></span>
+            </div>
+            <div class="transfer-line">
+                <span>Total Allocated</span>
+                <span>$<span id="suggestedTotal">${formatCurrency(totalWeeklyIncome, false)}</span></span>
+            </div>
+        </div>
+    `;
+    
+    transferDetails.innerHTML = html;
+    
+    const transferBtn = document.getElementById('transferBtn');
+    if (transferBtn) {
+        transferBtn.disabled = false;
+        // Store allocations for execute function
+        transferBtn.dataset.fixedAmount = allocations.fixed;
+        transferBtn.dataset.generalAmount = allocations.general;
+        transferBtn.dataset.savingsAmount = allocations.savings;
+    }
+}
+
+function updateIncomeDayDate() {
+    const frequency = document.getElementById('incomeFrequency').value;
+    const container = document.getElementById('incomeDayDate');
+    
+    container.innerHTML = `
+        <div style="margin-bottom: 8px;">
+            <label style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; color: #666;">
+                Next Payment Date
+            </label>
+            <input type="date" id="incomeNextDate" style="width: 100%;" required>
+            <small style="display: block; margin-top: 4px; color: #666; font-size: 0.7rem;">
+                When will you next receive this income?
+            </small>
+        </div>
+    `;
+    
+    // Set default to today
+    const today = new Date();
+    document.getElementById('incomeNextDate').value = today.toISOString().split('T')[0];
+}
+
+function updateNewExpenseDayDate() {
+    const frequency = document.getElementById('newExpenseFrequency').value;
+    const container = document.getElementById('newExpenseDayDate');
+    
+    container.innerHTML = `
+        <div style="margin-bottom: 8px;">
+            <label style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; color: #666;">
+                Next Payment Date
+            </label>
+            <input type="date" id="newExpenseNextDate" style="width: 100%;" required>
+            <small style="display: block; margin-top: 4px; color: #666; font-size: 0.7rem;">
+                When is the next payment due?
+            </small>
+        </div>
+    `;
+    
+    // Set default to today
+    const today = new Date();
+    document.getElementById('newExpenseNextDate').value = today.toISOString().split('T')[0];
+}
+
+function calculateCashFlowForecast() {
+    if (!budgetData || budgetData.length === 0) return [];
+
+    let forecast = [];
+    let runningBalance = bucketAccounts.fixed + bucketAccounts.general;
+    
+    // For existing weeks and projections
+    for (let i = 0; i < Math.max(6, budgetData.length); i++) {
+        let weekData;
+        let weekStartDate;
+        let weekEndDate;
+        
+        if (i < budgetData.length) {
+            weekData = budgetData[i];
+            const [day, month, year] = weekData.weekStarting.split('/');
+            weekStartDate = new Date(year, month - 1, day);
+        } else {
+            // Project future weeks
+            const lastWeek = budgetData[budgetData.length - 1];
+            const [lastDay, lastMonth, lastYear] = lastWeek.weekStarting.split('/');
+            weekStartDate = new Date(lastYear, lastMonth - 1, lastDay);
+            weekStartDate.setDate(weekStartDate.getDate() + (i - budgetData.length + 1) * 7);
+            
+            weekData = {
+                weekStarting: formatDate(weekStartDate),
+                income: 0,
+                expenses: { ...lastWeek.expenses }
+            };
+        }
+        
+        // Calculate week end date (6 days after start)
+        weekEndDate = new Date(weekStartDate);
+        weekEndDate.setDate(weekEndDate.getDate() + 6);
+        
+        // For the first week, if it starts mid-week, we need to calculate partial amounts
+        let totalIncome = 0;
+        let totalExpenses = 0;
+        
+        if (i === 0) {
+            // For the first week, calculate what falls within the partial week
+            incomeStreams.forEach(income => {
+                totalIncome += calculateRecurringAmount(income, weekData.weekStarting, 'income');
+            });
+            
+            Object.values(weekData.expenses || {}).forEach(expense => {
+                totalExpenses += calculateRecurringAmount(expense, weekData.weekStarting, 'expense');
+            });
+        } else {
+            // For subsequent weeks, use standard calculation
+            totalIncome = calculateWeeklyIncome(weekData.weekStarting);
+            
+            Object.values(weekData.expenses || {}).forEach(expense => {
+                totalExpenses += calculateRecurringAmount(expense, weekData.weekStarting, 'expense');
+            });
+        }
+        
+        const netCashFlow = totalIncome - totalExpenses;
+        const weekEndBalance = runningBalance + netCashFlow;
+        const needsSupport = weekEndBalance < cashFlowSettings.minBuffer;
+        const hasExcess = weekEndBalance > (cashFlowSettings.minBuffer + 2000);
+        
+        forecast.push({
+            weekIndex: i,
+            weekStarting: weekData.weekStarting,
+            weekEnding: formatDate(weekEndDate),
+            income: totalIncome,
+            expenses: totalExpenses,
+            netCashFlow: netCashFlow,
+            startBalance: runningBalance,
+            endBalance: weekEndBalance,
+            needsSupport: needsSupport,
+            hasExcess: hasExcess,
+            isCurrent: i === selectedWeek,
+            daysInWeek: i === 0 ? Math.min(7, Math.ceil((weekEndDate - weekStartDate) / (24 * 60 * 60 * 1000)) + 1) : 7
+        });
+        
+        runningBalance = weekEndBalance;
+    }
+    
+    return forecast;
+}
+
+function updateCashFlowDisplay(forecast, actions) {
+    const forecastContainer = document.getElementById('cashFlowForecast');
+    const mobileContainer = document.getElementById('cashFlowForecastMobile');
+    
+    let forecastHTML = '';
+    let mobileHTML = '';
+    
+    forecast.slice(0, 6).forEach(week => {
+        let className = 'forecast-row';
+        let cardClass = 'forecast-card';
+        
+        if (week.isCurrent) {
+            className += ' current';
+            cardClass += ' current';
+        } else if (week.needsSupport || week.hasExcess) {
+            className += ' warning';
+            cardClass += ' warning';
+        }
+        
+        let status = 'OK';
+        if (week.needsSupport) status = 'Low';
+        else if (week.hasExcess) status = 'High';
+        else if (week.netCashFlow > 0) status = 'Good';
+        
+        // Desktop view
+        forecastHTML += `
+            <div class="${className}">
+                <span>${week.weekStarting}</span>
+                <span>${formatCurrency(week.income)}</span>
+                <span>${formatCurrency(week.expenses)}</span>
+                <span class="${week.netCashFlow >= 0 ? 'status-positive' : 'status-negative'}">${formatCurrency(week.netCashFlow)}</span>
+                <span class="${week.endBalance >= cashFlowSettings.minBuffer ? 'status-positive' : 'status-negative'}">${formatCurrency(week.endBalance)}</span>
+                <span>${status}</span>
+            </div>
+        `;
+        
+        // Mobile view
+        mobileHTML += `
+            <div class="${cardClass}">
+                <div class="forecast-card-header">
+                    <span>${week.weekStarting}</span>
+                    <span>${status}</span>
+                </div>
+                <div class="forecast-card-row">
+                    <span><label>Income:</label></span>
+                    <span>${formatCurrency(week.income)}</span>
+                </div>
+                <div class="forecast-card-row">
+                    <span><label>Expenses:</label></span>
+                    <span>${formatCurrency(week.expenses)}</span>
+                </div>
+                <div class="forecast-card-row">
+                    <span><label>Net:</label></span>
+                    <span class="${week.netCashFlow >= 0 ? 'status-positive' : 'status-negative'}">${formatCurrency(week.netCashFlow)}</span>
+                </div>
+                <div class="forecast-card-row" style="border-top: 1px solid #ddd; margin-top: 8px; padding-top: 8px;">
+                    <span><label>End Balance:</label></span>
+                    <span class="${week.endBalance >= cashFlowSettings.minBuffer ? 'status-positive' : 'status-negative'}">${formatCurrency(week.endBalance)}</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    forecastContainer.innerHTML = forecastHTML;
+    mobileContainer.innerHTML = mobileHTML;
+    
+    const actionsContainer = document.getElementById('cashFlowActions');
+    
+    if (actions && actions.length > 0) {
+        let actionsHTML = '<h3 style="font-size: 1rem; margin-bottom: 16px;">Recommended Actions:</h3>';
+        
+        actions.forEach(action => {
+            const actionText = action.type === 'transfer_out' ? 'Transfer to Savings' : 'Transfer from Savings';
+            
+            actionsHTML += `
+                <div class="action-item">
+                    <div class="action-header">${actionText}</div>
+                    <div>Week ${action.week}: ${formatCurrency(action.amount)}</div>
+                    <div class="action-meta">${action.reason}</div>
+                </div>
+            `;
+        });
+        
+        actionsContainer.innerHTML = actionsHTML;
+    } else {
+        actionsContainer.innerHTML = '<p style="text-align: center; color: #666;">No actions needed</p>';
+    }
+}
+
+// Budget Manager Object
+window.budgetManager = {
+    selectAccountType: function(type) {
+        accountStructure = type;
+        
+        // Update UI
+        document.querySelectorAll('.account-type-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        event.target.closest('.account-type-option').classList.add('selected');
+        
+        // Update balance inputs
+        updateAccountBalanceInputs(type);
+    },
+    
+    completeAccountSetup: function() {
+        if (accountStructure === 'simple') {
+            const mainBalance = parseFloat(document.getElementById('mainAccountInput')?.value) || 0;
+            const savingsBalance = parseFloat(document.getElementById('savingsAccountInput')?.value) || 0;
+            
+            bucketAccounts = {
+                fixed: 0,
+                general: mainBalance,
+                savings: savingsBalance
+            };
+        } else if (accountStructure === 'standard') {
+            const fixedBalance = parseFloat(document.getElementById('fixedAccountInput')?.value) || 0;
+            const generalBalance = parseFloat(document.getElementById('generalAccountInput')?.value) || 0;
+            const savingsBalance = parseFloat(document.getElementById('savingsAccountInput')?.value) || 0;
+            
+            bucketAccounts = {
+                fixed: fixedBalance,
+                general: generalBalance,
+                savings: savingsBalance
+            };
+        }
+        
+        // Save the setup
+        isInitialSetup = false;
+        saveAppData();
+        
+        // Hide account setup, show week setup
+        document.getElementById('accountSetupSection').classList.add('hidden');
+        document.getElementById('weekSetupSection').classList.remove('hidden');
+        
+        // Set today's date as default
+        const today = new Date();
+        const dateInput = document.getElementById('weekStartingDate');
+        if (dateInput) {
+            dateInput.value = today.toISOString().split('T')[0];
+        }
+    },
+
+    toggleIncomeForm: function() {
+        const form = document.getElementById('incomeForm');
+        form.classList.toggle('hidden');
+        if (!form.classList.contains('hidden')) {
+            document.getElementById('incomeName').focus();
+            // Initialize the date field
+            updateIncomeDayDate();
+        }
+    },
+
+    addNewWeek: function() {
+        if (budgetData.length === 0) {
+            alert('Please set up your first week using the week setup section above.');
+            return;
+        }
+        
+        const lastWeek = budgetData[budgetData.length - 1];
+        const dateParts = lastWeek.weekStarting.split('/');
+        const lastDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+        lastDate.setDate(lastDate.getDate() + 7);
+        
+        const newWeek = {
+            weekStarting: formatDate(lastDate),
+            income: 0,
+            expenses: {}
+        };
+        
+        Object.keys(lastWeek.expenses || {}).forEach(key => {
+            newWeek.expenses[key] = { ...lastWeek.expenses[key] };
+        });
+        
+        budgetData.push(newWeek);
+        selectedWeek = budgetData.length - 1;
+        updateDisplay();
+        saveAppData();
+    },
+
+    handleCategoryChange: function() {
+        const categorySelect = document.getElementById('expenseCategory');
+        const nameInput = document.getElementById('newExpenseName');
+        
+        if (categorySelect.value === 'custom') {
+            nameInput.style.display = 'block';
+            nameInput.value = '';
+            nameInput.focus();
+        } else if (categorySelect.value === '') {
+            nameInput.style.display = 'none';
+            nameInput.value = '';
+        } else {
+            nameInput.style.display = 'none';
+            nameInput.value = categorySelect.value;
+        }
+    },
+
+    addNewExpense: function() {
+        const categorySelect = document.getElementById('expenseCategory');
+        const nameInput = document.getElementById('newExpenseName');
+        const name = nameInput.value.trim() || categorySelect.value;
+        const amount = parseFloat(document.getElementById('newExpenseAmount').value) || 0;
+        const frequency = document.getElementById('newExpenseFrequency').value;
+        const nextDateInput = document.getElementById('newExpenseNextDate');
+        
+        if (!name || name === '' || name === 'custom') {
+            alert('Please select an expense category or enter a custom name');
+            return;
+        }
+        
+        if (amount <= 0) {
+            alert('Please enter a valid amount');
+            return;
+        }
+        
+        if (!nextDateInput || !nextDateInput.value) {
+            alert('Please enter the next payment date');
+            return;
+        }
+        
+        const nextDate = new Date(nextDateInput.value);
+        const newExpense = {
+            amount: amount,
+            frequency: frequency,
+            nextPaymentDate: formatDate(nextDate)
+        };
+        
+        // Extract day of week for weekly/fortnightly
+        if (frequency === 'weekly' || frequency === 'fortnightly') {
+            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            newExpense.dayOfWeek = dayNames[nextDate.getDay()];
+        }
+        
+        // Extract day of month for monthly
+        if (frequency === 'monthly') {
+            newExpense.dayOfMonth = nextDate.getDate();
+        }
+        
+        budgetData.forEach(week => {
+            week.expenses[name] = { ...newExpense };
+        });
+        
+        categorySelect.value = '';
+        nameInput.value = '';
+        nameInput.style.display = 'none';
+        document.getElementById('newExpenseAmount').value = '';
+        document.getElementById('newExpenseFrequency').value = 'weekly';
+        updateNewExpenseDayDate();
+        
+        updateBudget();
+        saveAppData();
+    },
+
+    updateBucketStart: function(type, value) {
+        if (type === 'main') {
+            bucketAccounts.general = parseFloat(value) || 0;
+        } else {
+            bucketAccounts[type] = parseFloat(value) || 0;
+        }
+        updateBucketDisplay();
+        saveAppData();
+    },
+
+    updateCashFlowStatus: updateCashFlowStatus,
+    updateNewExpenseDayDate: updateNewExpenseDayDate,
+    updateIncomeDayDate: updateIncomeDayDate,
+
+    confirmWeekStart: function() {
+        const dateInput = document.getElementById('weekStartingDate');
+        if (!dateInput || !dateInput.value) {
+            alert('Please select a week starting date');
+            return;
+        }
+        
+        const selectedDate = new Date(dateInput.value);
+        const formattedDate = formatDate(selectedDate);
+        
+        budgetData = [{
+            weekStarting: formattedDate,
+            income: 0,
+            expenses: {}
+        }];
+        
+        selectedWeek = 0;
+        
+        document.getElementById('weekSetupSection').classList.add('hidden');
+        document.getElementById('weekSelectorSection').style.display = 'flex';
+        
+        updateDisplay();
+        saveAppData();
+        
+        const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+        alert(`Starting date set to ${dayName}, ${selectedDate.toLocaleDateString('en-US')} (${formattedDate}). Your financial snapshot begins from this date.`);
+    },
+
+    executeTransfer: function() {
+        const transferBtn = document.getElementById('transferBtn');
+        if (!transferBtn) return;
+        
+        const fixedAmount = parseFloat(transferBtn.dataset.fixedAmount) || 0;
+        const generalAmount = parseFloat(transferBtn.dataset.generalAmount) || 0;
+        const savingsAmount = parseFloat(transferBtn.dataset.savingsAmount) || 0;
+        
+        if (fixedAmount + generalAmount + savingsAmount <= 0) {
+            alert('No funds available for transfer');
+            return;
+        }
+
+        // All income goes to general first, then we allocate
+        bucketAccounts.fixed += fixedAmount;
+        bucketAccounts.general += generalAmount; // This represents keeping funds in general
+        bucketAccounts.savings += savingsAmount;
+
+        const currentWeek = budgetData[selectedWeek];
+        transferHistory.unshift({
+            date: new Date().toLocaleDateString(),
+            week: currentWeek.weekStarting,
+            fixed: fixedAmount,
+            general: generalAmount,
+            savings: savingsAmount,
+            total: fixedAmount + generalAmount + savingsAmount
+        });
+
+        updateBucketDisplay();
+        saveAppData();
+        
+        let message = 'Transfer completed!\n';
+        if (fixedAmount > 0) message += `To Fixed: ${formatCurrency(fixedAmount)}\n`;
+        if (generalAmount > 0) message += `Kept in General: ${formatCurrency(generalAmount)}\n`;
+        if (savingsAmount > 0) message += `To Savings: ${formatCurrency(savingsAmount)}`;
+        
+        alert(message);
+    },
+
+    optimizeCashFlow: function() {
+        const forecast = calculateCashFlowForecast();
+        if (!forecast || forecast.length === 0) {
+            alert('Unable to generate cash flow forecast');
+            return;
+        }
+
+        let savingsBalance = bucketAccounts.savings || 0;
+        let actions = [];
+        
+        forecast.forEach((week) => {
+            if (week.needsSupport && savingsBalance > 0) {
+                const shortfall = cashFlowSettings.minBuffer - week.endBalance;
+                const transferAmount = Math.min(shortfall + 500, savingsBalance);
+                
+                if (transferAmount > 0) {
+                    actions.push({
+                        week: week.weekStarting,
+                        type: 'transfer_in',
+                        amount: transferAmount,
+                        reason: 'Cover shortfall'
+                    });
+                    
+                    savingsBalance -= transferAmount;
+                }
+            } else if (week.hasExcess) {
+                const excess = week.endBalance - (cashFlowSettings.minBuffer + 1000);
+                const transferAmount = Math.min(excess, 2000);
+                
+                if (transferAmount > 500) {
+                    actions.push({
+                        week: week.weekStarting,
+                        type: 'transfer_out',
+                        amount: transferAmount,
+                        reason: 'Save excess funds'
+                    });
+                }
+            }
+        });
+        
+        updateCashFlowDisplay(forecast, actions);
+    },
+
+    addIncomeSource: function() {
+        const name = document.getElementById('incomeName').value.trim();
+        const amount = parseFloat(document.getElementById('incomeAmount').value) || 0;
+        const frequency = document.getElementById('incomeFrequency').value;
+        const nextDateInput = document.getElementById('incomeNextDate');
+        
+        if (!name) {
+            alert('Please enter an income source name');
+            return;
+        }
+        
+        if (amount <= 0) {
+            alert('Please enter a valid amount');
+            return;
+        }
+        
+        if (!nextDateInput || !nextDateInput.value) {
+            alert('Please enter the next payment date');
+            return;
+        }
+        
+        const nextDate = new Date(nextDateInput.value);
+        
+        const newIncome = {
+            name: name,
+            amount: amount,
+            frequency: frequency,
+            nextPaymentDate: formatDate(nextDate)
+        };
+        
+        if (frequency === 'one-off') {
+            newIncome.isOneOff = true;
+            newIncome.oneOffWeek = formatDate(nextDate);
+        } else if (frequency === 'weekly' || frequency === 'fortnightly') {
+            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            newIncome.dayOfWeek = dayNames[nextDate.getDay()];
+        } else if (frequency === 'monthly') {
+            newIncome.dayOfMonth = nextDate.getDate();
+        }
+        
+        incomeStreams.push(newIncome);
+        
+        document.getElementById('incomeName').value = '';
+        document.getElementById('incomeAmount').value = '';
+        document.getElementById('incomeFrequency').value = 'one-off';
+        updateIncomeDayDate();
+        this.toggleIncomeForm();
+        
+        updateBudget();
+        saveAppData();
+    },
+
+    deleteIncomeSource: function(index) {
+        if (confirm(`Delete "${incomeStreams[index].name}"?`)) {
+            incomeStreams.splice(index, 1);
+            updateBudget();
+            saveAppData();
+        }
+    },
+
+    updateExpenseAmount: function(expenseKey, value) {
+        if (!budgetData[selectedWeek] || !budgetData[selectedWeek].expenses[expenseKey]) {
+            return;
+        }
+        budgetData[selectedWeek].expenses[expenseKey].amount = parseFloat(value) || 0;
+        updateBudget();
+        saveAppData();
+    },
+
+    deleteExpense: function(expenseName) {
+        if (confirm(`Delete "${expenseName}" from all weeks?`)) {
+            budgetData.forEach(week => {
+                if (week.expenses && week.expenses[expenseName]) {
+                    delete week.expenses[expenseName];
+                }
+            });
+            updateBudget();
+            saveAppData();
+        }
+    },
+
+    toggleExpenses: function() {
+        const list = document.getElementById('expensesList');
+        const toggleText = document.getElementById('toggleText');
+        
+        if (list.classList.contains('hidden')) {
+            list.classList.remove('hidden');
+            toggleText.textContent = 'Hide Add Expense';
+            updateExpensesList();
+        } else {
+            list.classList.add('hidden');
+            toggleText.textContent = 'Add New Expense';
+        }
+    }
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        console.log('Starting initialization...');
+        
+        loadAppData();
+        initializeDefaultData();
+        initializeWeekSetup();
+        
+        if (budgetData.length > 0) {
+            updateDisplay();
+        } else {
+            updateBucketDisplay();
+            updateCashFlowStatus();
+        }
+        
+        updateNewExpenseDayDate();
+        updateIncomeDayDate();
+        
+        console.log('Initialization complete');
+        
+        document.querySelector('.loading').style.display = 'none';
+    } catch (error) {
+        console.error('Initialization error:', error);
+        document.querySelector('.loading').style.display = 'none';
+        alert('There was an error loading the app. Please refresh the page.');
+    }
+});
+
+window.addEventListener('beforeunload', saveAppData);
+```
+
+})();
+</script>
+
+</body>
+</html>
