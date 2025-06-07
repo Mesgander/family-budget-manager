@@ -746,24 +746,6 @@
                             </div>
                         </div>
                     </div>
-                        <div class="form-grid">
-                            <input type="text" id="incomeName" placeholder="Income source name (e.g., Salary, Gift, Bonus)">
-                            <div class="form-row">
-                                <input type="number" id="incomeAmount" placeholder="Amount" step="0.01">
-                                <select id="incomeFrequency" onchange="budgetManager.updateIncomeDayDate()">
-                                    <option value="one-off">One-off</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="fortnightly">Fortnightly</option>
-                                    <option value="monthly">Monthly</option>
-                                </select>
-                            </div>
-                            <div id="incomeDayDate"></div>
-                            <div class="form-row">
-                                <button onclick="budgetManager.addIncomeSource()" style="flex: 1;">Add Income</button>
-                                <button onclick="budgetManager.toggleIncomeForm()" class="secondary" style="flex: 1;">Cancel</button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
